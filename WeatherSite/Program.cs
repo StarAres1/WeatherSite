@@ -1,7 +1,18 @@
+using Microsoft.EntityFrameworkCore;
+using WeatherSite.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Регистрируем контекст БД
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseNpgsql(
+builder.Configuration.GetConnectionString("DefaultConnection"),
+o => o.MigrationsAssembly("WeatherSite") // имя проекта
+));
+
 
 var app = builder.Build();
 
