@@ -10,6 +10,7 @@ using System.IO;
 using WeatherSite.Data;
 using NPOI.HSSF.Record;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace WeatherSite.Controllers
 {
@@ -39,6 +40,8 @@ namespace WeatherSite.Controllers
                 return BadRequest("Не добавлено ни одного файла!");
             }
 
+            var reportsToAdd = new List<Report>();
+
             foreach (IFormFile file in files)
             {
                 if (file == null || file.Length == 0)
@@ -54,10 +57,11 @@ namespace WeatherSite.Controllers
                         stream.Position = 0;
 
                         using (var fs = new XSSFWorkbook(stream))
-                        {
+                        {                            
                             int numberOfSheets = fs.NumberOfSheets;
                             for (int j = 0; j < numberOfSheets; j++)
                             {
+                                Console.WriteLine($"Парсинг {j}");
                                 var sheet = fs.GetSheetAt(j);
 
 
@@ -82,27 +86,27 @@ namespace WeatherSite.Controllers
 
                                         var report = new Report();
 
-                                        if (dateCell != null && dateCell.CellType != CellType.Blank)
+                                        if (dateCell != null)
                                         {
-                                            var date = dateCell.StringCellValue.Trim();
+                                            var date = dateCell.StringCellValue;
                                             if (DateTime.TryParse(date, out var parsedDate))
                                             {
                                                 report.Date = DateOnly.FromDateTime(parsedDate);
                                             }
                                             else
                                             {
-                                                Console.WriteLine($"Строка {i + 1} содержит некорректный текстовый формат даты: '{date}'");
+                                                //Console.WriteLine($"Строка {i + 1} содержит некорректный текстовый формат даты: '{date}'");
                                                 continue;
                                             }
 
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Строка {i + 1} не содержит даты!");
+                                            //Console.WriteLine($"Строка {i + 1} не содержит даты!");
                                             continue;
                                         }
 
-                                        if (timeCell != null && timeCell.CellType != CellType.Blank)
+                                        if (timeCell != null)
                                         {
                                             var time = timeCell.ToString();
                                             if (TimeOnly.TryParseExact(time, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out TimeOnly parsedTime))
@@ -111,193 +115,113 @@ namespace WeatherSite.Controllers
                                             }
                                             else
                                             {
-                                                Console.WriteLine($"Строка {i + 1} содержит неизвестный формат времени!");
+                                                //Console.WriteLine($"Строка {i + 1} содержит неизвестный формат времени!");
                                             }
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Строка {i + 1} не содержит времени!");
+                                            //Console.WriteLine($"Строка {i + 1} не содержит времени!");
                                             continue;
                                         }
 
-                                        if (tCell != null && tCell.CellType != CellType.Blank)
+                                        if (tCell != null)
                                         {
-                                            try
-                                            {
-                                                report.Temperature = (short)tCell.NumericCellValue;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать температуру в бд! {e.Message}");
-                                            }
+                                            report.Temperature = (short)tCell.NumericCellValue;
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Строка {i + 1} не содержит температуры!");
+                                            //Console.WriteLine($"Строка {i + 1} не содержит температуры!");
                                             continue;
                                         }
-                                        if (humidityCell != null && humidityCell.CellType != CellType.Blank)
+                                        if (humidityCell != null)
                                         {
-                                            try
-                                            {
-                                                report.Humidity = (byte)humidityCell.NumericCellValue;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать влажность в бд! {e.Message}");
-                                            }
+                                            report.Humidity = (byte)humidityCell.NumericCellValue;
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Строка {i + 1} не содержит влажности!");
+                                            //Console.WriteLine($"Строка {i + 1} не содержит влажности!");
                                             continue;
                                         }
 
-                                        if (tdCell != null && tdCell.CellType != CellType.Blank)
+                                        if (tdCell != null)
                                         {
-                                            try
-                                            {
-                                                report.Td = (short)tdCell.NumericCellValue;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать Td в бд! {e.Message}");
-                                            }
+                                            report.Td = (short)tdCell.NumericCellValue;
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Строка {i + 1} не содержит Td!");
+                                            //Console.WriteLine($"Строка {i + 1} не содержит Td!");
                                             continue;
                                         }
 
-                                        if (pressureCell != null && pressureCell.CellType != CellType.Blank)
+                                        if (pressureCell != null)
                                         {
-                                            try
-                                            {
-                                                report.Pressure = (ushort)pressureCell.NumericCellValue;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать давление в бд! {e.Message}");
-                                            }
+                                            report.Pressure = (ushort)pressureCell.NumericCellValue;
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Строка {i + 1} не содержит давления!");
+                                            //Console.WriteLine($"Строка {i + 1} не содержит давления!");
                                             continue;
                                         }
-                                        if (directionCell != null && directionCell.CellType != CellType.Blank)
+                                        if (directionCell != null)
                                         {
-                                            try
-                                            {
-                                                report.DirectionWind = directionCell.ToString();
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать направление ветра в бд! {e.Message}");
-                                            }
+                                            report.DirectionWind = directionCell.ToString();
                                         }
                                         else
                                         {
                                             report.DirectionWind = null;
                                         }
 
-                                        if (velocityCell != null && velocityCell.CellType != CellType.Blank)
+                                        if (velocityCell != null && double.TryParse(hCell.ToString(), out var numericValue3))
                                         {
-                                            try
-                                            {
-                                                report.VelocityWind = (byte)velocityCell.NumericCellValue;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать скорость ветра в бд! {e.Message}");
-                                            }
+                                            report.VelocityWind = (byte)numericValue3;
                                         }
                                         else
                                         {
                                             report.VelocityWind = null;
                                         }
 
-                                        if (cloudCoverCell != null && cloudCoverCell.CellType != CellType.Blank)
+                                        if (cloudCoverCell != null && double.TryParse(hCell.ToString(), out var numericValue2))
                                         {
-                                            try
-                                            {
-                                                report.CloudCover = (byte)cloudCoverCell.NumericCellValue;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать облачность в бд! {e.Message}");
-                                            }
+                                            report.CloudCover = (byte)numericValue2;
                                         }
                                         else
                                         {
                                             report.CloudCover = null;
                                         }
 
-                                        if (hCell != null && hCell.CellType != CellType.Blank)
+                                        if (hCell != null && double.TryParse(hCell.ToString(), out var numericValue))
                                         {
-                                            try
-                                            {
-                                                report.H = (ushort)hCell.NumericCellValue;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать h в бд! {e.Message}");
-                                            }
+                                            report.H = (ushort)numericValue;
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"Строка {i + 1} не содержит h!");
+                                            //Console.WriteLine($"Строка {i + 1} не содержит h!");
                                             continue;
                                         }
 
-                                        if (vvCell != null && vvCell.CellType != CellType.Blank)
+                                        if (vvCell != null && double.TryParse(hCell.ToString(), out var numericValue1))
                                         {
-                                            try
-                                            {
-                                                report.VV = (byte)vvCell.NumericCellValue;
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать vv в бд! {e.Message}");
-                                            }
+                                            report.VV = (byte)numericValue1;                                            
                                         }
                                         else
                                         {
                                             report.VV = null;
                                         }
 
-                                        if (descriptionCell != null && descriptionCell.CellType != CellType.Blank)
+                                        if (descriptionCell != null)
                                         {
-                                            try
-                                            {
-                                                report.Description = descriptionCell.ToString();
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                Console.WriteLine($"Строка {i + 1} не удалось записать описание в бд! {e.Message}");
-                                            }
+                                            report.Description = descriptionCell.ToString();
                                         }
                                         else
                                         {
                                             report.Description = null;
                                         }
 
-                                        try
-                                        {
-                                            _context.Reports.Add(report);
-                                            _context.SaveChanges();
-                                        }
-                                        catch (Microsoft.EntityFrameworkCore.DbUpdateException e)
-                                        {
-                                            Console.WriteLine($"Строка {i + 1} такой первичный ключ уже есть! {e.Message}\"");
-                                        }
+                                        reportsToAdd.Add(report);
                                     }
-
-
                                     else
                                     {
-                                        Console.WriteLine($"В строке {i + 1} ничего нет!");
+                                        //Console.WriteLine($"В строке {i + 1} ничего нет!");
                                     }
                                 }
 
@@ -310,7 +234,35 @@ namespace WeatherSite.Controllers
                     return BadRequest("Неверный формат файла");
                 }
             }
+            try
+            {
+                Console.WriteLine("Запись в бд");
+                _context.Reports.AddRange(reportsToAdd);
+                _context.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Не удалось добавить записи в бд");
+            }
+            Console.WriteLine("Финиш");
             return View("~/Views/Home/Success.cshtml");
         }
     }
 }
+
+
+// Можно заносить каждую строку в бд по отдельности, а не массивом. Но в таком случае мы будем проигрывать в
+//скорости. Однако в версии реализованной выше есть один недостаток, если хотя бы одна запись будет отклонена 
+// на стороне бд (например, из-за повторяющегося первичного ключа), то ничего не будет записана в бд.
+// В случае построчной записи не будет  записана только, неподходящая строка
+
+
+//try
+//{
+//    _context.Reports.Add(report);
+//    _context.SaveChanges();
+//}
+//catch (Microsoft.EntityFrameworkCore.DbUpdateException e)
+//{
+//    //Console.WriteLine($"Строка {i + 1} такой первичный ключ уже есть! {e.Message}\"");
+//}
