@@ -11,8 +11,8 @@ namespace WeatherSite.Models
         public byte Humidity { get; set; }
         public short Td {  get; set; }
         public ushort Pressure { get; set; }
-        public string DirectionWind { get; set; }
-        public byte VelocityWind { get; set; }
+        public string? DirectionWind { get; set; }
+        public byte? VelocityWind { get; set; }
         public byte? CloudCover { get; set; }
         public ushort H { get; set; }
         public byte? VV { get; set; }
