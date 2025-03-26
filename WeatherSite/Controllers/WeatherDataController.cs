@@ -9,12 +9,18 @@ using System;
 using System.IO;
 using WeatherSite.Data;
 using NPOI.HSSF.Record;
+using Microsoft.AspNetCore.Http;
 
 namespace WeatherSite.Controllers
 {
     public class WeatherDataController : Controller
     {
         private readonly AppDbContext _context;
+
+        public WeatherDataController(AppDbContext context)
+        {
+            _context = context;
+        }
         public IActionResult Getting()
         {
             return View();
@@ -47,7 +53,7 @@ namespace WeatherSite.Controllers
                         
                         for (int i = 4; i < sheet.LastRowNum; i++)
                         {
-                            var row = sheet.GetRow(0);
+                            var row = sheet.GetRow(i);
 
                             if (row != null)
                             {
@@ -68,25 +74,17 @@ namespace WeatherSite.Controllers
 
                                 if(dateCell != null && dateCell.CellType != CellType.Blank)
                                 {
-
-                                    if (DateUtil.IsCellDateFormatted(dateCell))
+                                    var date = dateCell.StringCellValue.Trim();
+                                    if (DateTime.TryParse(date, out var parsedDate))
                                     {
-                                        var date = dateCell.DateCellValue;
-
-                                        try
-                                        {
-                                            report.Date = DateOnly.FromDateTime(date.Value);
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            Console.WriteLine($"Ошибка при записи строки {i + 1} {e.Message}");
-                                        }
+                                        report.Date = DateOnly.FromDateTime(parsedDate);
                                     }
                                     else
                                     {
-                                        Console.WriteLine($"Строка {i + 1} содержит неизвестный формат даты!");
+                                        Console.WriteLine($"Строка {i + 1} содержит некорректный текстовый формат даты: '{date}'");
                                         continue;
                                     }
+
                                 }
                                 else
                                 {
@@ -275,8 +273,15 @@ namespace WeatherSite.Controllers
                                     report.Description = null;
                                 }
 
-                                _context.Reports.Add(report);
-                                _context.SaveChanges();
+                                try
+                                {
+                                    _context.Reports.Add(report);
+                                    _context.SaveChanges();
+                                }
+                                catch(Microsoft.EntityFrameworkCore.DbUpdateException e)
+                                {
+                                    Console.WriteLine($"Строка {i + 1} такой первичный ключ уже есть в бд! {e.Message}\"");
+                                }
                             }
 
 
@@ -292,7 +297,7 @@ namespace WeatherSite.Controllers
             {
                 return BadRequest("Неверный формат файла");
             }
-            return View("Success");
+            return View("~/Views/Home/Success.cshtml");
         }
     }
 }
