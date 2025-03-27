@@ -22,9 +22,25 @@ namespace WeatherSite.Controllers
         {
             _context = context;
         }
-        public IActionResult Getting()
+        public IActionResult Getting(int year, int month)
         {
-            return View();
+            Console.WriteLine(year);
+            Console.WriteLine(month);
+            if (year == 0 && month == 0)
+            {
+                return View();
+            }
+            else
+            {
+                var reports = _context.Reports
+                .Where(r => r.Date.Year == year && r.Date.Month == month)
+                .ToList();
+
+                ViewBag.SelectedYear = year;
+                ViewBag.SelectedMonth = month;
+
+                return View(reports);
+            }
         }
 
         public IActionResult Adding()
@@ -171,7 +187,7 @@ namespace WeatherSite.Controllers
                                             report.DirectionWind = null;
                                         }
 
-                                        if (velocityCell != null && double.TryParse(hCell.ToString(), out var numericValue3))
+                                        if (velocityCell != null && double.TryParse(velocityCell.ToString(), out var numericValue3))
                                         {
                                             report.VelocityWind = (byte)numericValue3;
                                         }
@@ -180,7 +196,7 @@ namespace WeatherSite.Controllers
                                             report.VelocityWind = null;
                                         }
 
-                                        if (cloudCoverCell != null && double.TryParse(hCell.ToString(), out var numericValue2))
+                                        if (cloudCoverCell != null && double.TryParse(cloudCoverCell.ToString(), out var numericValue2))
                                         {
                                             report.CloudCover = (byte)numericValue2;
                                         }
@@ -199,7 +215,7 @@ namespace WeatherSite.Controllers
                                             continue;
                                         }
 
-                                        if (vvCell != null && double.TryParse(hCell.ToString(), out var numericValue1))
+                                        if (vvCell != null && double.TryParse(vvCell.ToString(), out var numericValue1))
                                         {
                                             report.VV = (byte)numericValue1;                                            
                                         }

@@ -1,3 +1,80 @@
-﻿@{
+﻿@model IEnumerable<WeatherSite.Models.Report>
+@{
 
+}
+
+<form asp-controller="WeatherData" asp-action="Getting">
+    <div class="form-group">
+        <strong>Выберите год:</strong><br>
+        <label><input type="radio" name="year" value="0" @(ViewBag.SelectedYear == 0 ? "checked" : "")> Все</label>
+        <label><input type="radio" name="year" value="2010" @(ViewBag.SelectedYear == 2010 ? "checked" : "")> 2010</label>
+        <label><input type="radio" name="year" value="2011" @(ViewBag.SelectedYear == 2011 ? "checked" : "")> 2011</label>
+        <label><input type="radio" name="year" value="2012" @(ViewBag.SelectedYear == 2012 ? "checked" : "")> 2012</label>
+        <label><input type="radio" name="year" value="2013" @(ViewBag.SelectedYear == 2013 ? "checked" : "")> 2013</label>
+    </div>
+
+    <div class="form-group">
+        <strong>Выберите месяц:</strong><br>
+        <label>
+            <input type="radio" name="month" value="0" @(ViewBag.SelectedMonth == 0 ? "checked" : "")>
+            Все
+        </label>
+        @for (int i = 1; i <= 12; i++)
+        {
+            <label>
+                <input type="radio" name="month" value="@i" @(ViewBag.SelectedMonth == i ? "checked" : "")>
+                @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
+            </label>
+        }
+    </div>
+
+    <!-- Кнопка отправки формы -->
+    <button type="submit">Отправить</button>
+</form>
+
+@if (Model != null && Model.Any())
+{
+    <h2>Отчеты за выбранный период</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Тепмпература</th>
+                <th>Влажность</th>
+                <th>Td</th>
+                <th>Давление</th>
+                <th>Направление ветра</th>
+                <th>Скорость ветра</th>
+                <th>Облачность</th>
+                <th>H</th>
+                <th>VV</th>
+                <th>Погодные явления</th>
+                
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var report in Model)
+            {
+                <tr>
+                    <td>@report.Date</td>
+                    <td>@report.Time</td>
+                    <td>@report.Temperature</td>
+                    <td>@report.Humidity</td>
+                    <td>@report.Td</td>
+                    <td>@report.Pressure</td>
+                    <td>@report.DirectionWind</td>
+                    <td>@report.VelocityWind</td>
+                    <td>@report.CloudCover</td>
+                    <td>@report.H</td>
+                    <td>@report.VV</td>
+                    <td>@report.Description</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <h1>Необходимо выбрать параметры отображения</h1>
 }
