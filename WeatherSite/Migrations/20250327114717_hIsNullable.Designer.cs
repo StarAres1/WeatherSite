@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WeatherSite.Data;
@@ -11,9 +12,11 @@ using WeatherSite.Data;
 namespace WeatherSite.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250327114717_hIsNullable")]
+    partial class hIsNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -39,7 +42,7 @@ namespace WeatherSite.Migrations
                     b.Property<string>("DirectionWind")
                         .HasColumnType("text");
 
-                    b.Property<int?>("H")
+                    b.Property<int>("H")
                         .HasColumnType("integer");
 
                     b.Property<byte>("Humidity")

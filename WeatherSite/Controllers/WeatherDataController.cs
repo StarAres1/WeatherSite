@@ -76,16 +76,15 @@ namespace WeatherSite.Controllers
             {
                 return BadRequest("Не добавлено ни одного файла!");
             }
-
-            var reportsToAdd = new List<Report>();
-
+            List<string> successDownLoad = new List<string>();
+            List<string> failedDownLoad = new List<string>();
+            var logs = new List<string>();
             foreach (IFormFile file in files)
             {
                 if (file == null || file.Length == 0)
                 {
                     continue;
                 }
-
                 if (file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
                 {
                     using (var stream = new MemoryStream())
@@ -93,19 +92,17 @@ namespace WeatherSite.Controllers
                         file.CopyTo(stream);
                         stream.Position = 0;
 
+                        var reportsToAdd = new List<Report>();
                         using (var fs = new XSSFWorkbook(stream))
-                        {                            
+                        {
                             int numberOfSheets = fs.NumberOfSheets;
                             for (int j = 0; j < numberOfSheets; j++)
                             {
                                 Console.WriteLine($"Парсинг {j}");
                                 var sheet = fs.GetSheetAt(j);
-
-
                                 for (int i = 4; i < sheet.LastRowNum; i++)
                                 {
                                     var row = sheet.GetRow(i);
-
                                     if (row != null)
                                     {
                                         var dateCell = row.GetCell(0);
@@ -120,9 +117,7 @@ namespace WeatherSite.Controllers
                                         var hCell = row.GetCell(9);
                                         var vvCell = row.GetCell(10);
                                         var descriptionCell = row.GetCell(11);
-
                                         var report = new Report();
-
                                         if (dateCell != null)
                                         {
                                             var date = dateCell.StringCellValue;
@@ -133,16 +128,16 @@ namespace WeatherSite.Controllers
                                             else
                                             {
                                                 //Console.WriteLine($"Строка {i + 1} содержит некорректный текстовый формат даты: '{date}'");
+                                                logs.Add($"Строка {i + 1} из файла {file.FileName} не была добавлена. Не получилость получить значение даты");
                                                 continue;
                                             }
-
                                         }
                                         else
                                         {
                                             //Console.WriteLine($"Строка {i + 1} не содержит даты!");
+                                            logs.Add($"Строка {i + 1} из файла {file.FileName} не была добавлена. В строке нет даты");
                                             continue;
                                         }
-
                                         if (timeCell != null)
                                         {
                                             var time = timeCell.ToString();
@@ -152,15 +147,17 @@ namespace WeatherSite.Controllers
                                             }
                                             else
                                             {
+                                                logs.Add($"Строка {i + 1} из файла {file.FileName} не была добавлена. Не получилость получить значение времени");
+                                                continue;
                                                 //Console.WriteLine($"Строка {i + 1} содержит неизвестный формат времени!");
                                             }
                                         }
                                         else
                                         {
                                             //Console.WriteLine($"Строка {i + 1} не содержит времени!");
+                                            logs.Add($"Строка {i + 1} из файла {file.FileName} не была добавлена. В строке нет времени");
                                             continue;
                                         }
-
                                         if (tCell != null)
                                         {
                                             report.Temperature = (short)tCell.NumericCellValue;
@@ -168,6 +165,7 @@ namespace WeatherSite.Controllers
                                         else
                                         {
                                             //Console.WriteLine($"Строка {i + 1} не содержит температуры!");
+                                            logs.Add($"Строка {i + 1} из файла {file.FileName} не была добавлена. В строке нет температуры");
                                             continue;
                                         }
                                         if (humidityCell != null)
@@ -177,9 +175,9 @@ namespace WeatherSite.Controllers
                                         else
                                         {
                                             //Console.WriteLine($"Строка {i + 1} не содержит влажности!");
+                                            logs.Add($"Строка {i + 1} из файла {file.FileName} не была добавлена. В строке нет влажности");
                                             continue;
                                         }
-
                                         if (tdCell != null)
                                         {
                                             report.Td = (short)tdCell.NumericCellValue;
@@ -187,9 +185,9 @@ namespace WeatherSite.Controllers
                                         else
                                         {
                                             //Console.WriteLine($"Строка {i + 1} не содержит Td!");
+                                            logs.Add($"Строка {i + 1} из файла {file.FileName} не была добавлена. В строке нет Td");
                                             continue;
                                         }
-
                                         if (pressureCell != null)
                                         {
                                             report.Pressure = (ushort)pressureCell.NumericCellValue;
@@ -197,6 +195,7 @@ namespace WeatherSite.Controllers
                                         else
                                         {
                                             //Console.WriteLine($"Строка {i + 1} не содержит давления!");
+                                            logs.Add($"Строка {i + 1} из файла {file.FileName} не была добавлена. В строке нет давления");
                                             continue;
                                         }
                                         if (directionCell != null)
@@ -207,7 +206,6 @@ namespace WeatherSite.Controllers
                                         {
                                             report.DirectionWind = null;
                                         }
-
                                         if (velocityCell != null && double.TryParse(velocityCell.ToString(), out var numericValue3))
                                         {
                                             report.VelocityWind = (byte)numericValue3;
@@ -216,7 +214,6 @@ namespace WeatherSite.Controllers
                                         {
                                             report.VelocityWind = null;
                                         }
-
                                         if (cloudCoverCell != null && double.TryParse(cloudCoverCell.ToString(), out var numericValue2))
                                         {
                                             report.CloudCover = (byte)numericValue2;
@@ -225,26 +222,22 @@ namespace WeatherSite.Controllers
                                         {
                                             report.CloudCover = null;
                                         }
-
                                         if (hCell != null && double.TryParse(hCell.ToString(), out var numericValue))
                                         {
                                             report.H = (ushort)numericValue;
                                         }
                                         else
                                         {
-                                            //Console.WriteLine($"Строка {i + 1} не содержит h!");
-                                            continue;
+                                            report.H = null;
                                         }
-
                                         if (vvCell != null && double.TryParse(vvCell.ToString(), out var numericValue1))
                                         {
-                                            report.VV = (byte)numericValue1;                                            
+                                            report.VV = (byte)numericValue1;
                                         }
                                         else
                                         {
                                             report.VV = null;
                                         }
-
                                         if (descriptionCell != null)
                                         {
                                             report.Description = descriptionCell.ToString();
@@ -253,7 +246,6 @@ namespace WeatherSite.Controllers
                                         {
                                             report.Description = null;
                                         }
-
                                         reportsToAdd.Add(report);
                                     }
                                     else
@@ -261,37 +253,45 @@ namespace WeatherSite.Controllers
                                         //Console.WriteLine($"В строке {i + 1} ничего нет!");
                                     }
                                 }
-
+                            }
+                            try
+                            {
+                                Console.WriteLine("Запись в бд");
+                                _context.Reports.AddRange(reportsToAdd);
+                                _context.SaveChanges();                                
+                                successDownLoad.Add(file.FileName);
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine($"Вот это дичь: {e.Message}");
+                                if (e.InnerException != null)
+                                {
+                                    Console.WriteLine($"Внутренняя ошибка: {e.InnerException.Message}");
+                                }
+                                failedDownLoad.Add(file.FileName);
+                                continue;
+                            }
+                            finally
+                            {
+                                _context.ChangeTracker.Clear();
                             }
                         }
                     }
                 }
                 else
                 {
-                    return BadRequest("Неверный формат файла");
+                    failedDownLoad.Add(file.FileName);
+                    continue;
                 }
             }
-            try
-            {
-                Console.WriteLine("Запись в бд");
-                _context.Reports.AddRange(reportsToAdd);
-                _context.SaveChanges();
-            }
-            catch (Exception e)
-            {
-                return BadRequest("Не удалось добавить записи в бд");
-            }
             Console.WriteLine("Финиш");
+            ViewBag.SuccessfullyProcessedFiles = successDownLoad;
+            ViewBag.failedProcessedFiles = failedDownLoad;
+            ViewBag.logs = logs;
             return View("~/Views/Home/Success.cshtml");
         }
     }
 }
-
-
-// Можно заносить каждую строку в бд по отдельности, а не массивом. Но в таком случае мы будем проигрывать в
-//скорости. Однако в версии реализованной выше есть один недостаток, если хотя бы одна запись будет отклонена 
-// на стороне бд (например, из-за повторяющегося первичного ключа), то ничего не будет записана в бд.
-// В случае построчной записи не будет  записана только, неподходящая строка
 
 
 //try

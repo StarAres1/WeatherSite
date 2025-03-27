@@ -1,4 +1,45 @@
 ﻿@{
-
+    var successfullyProcessedFiles = ViewBag.SuccessfullyProcessedFiles as List<string> ?? new List<string>();
+    var failedProcessedFiles = ViewBag.failedProcessedFiles as List<string> ?? new List<string>();
+    var logs = ViewBag.logs as List<string> ?? new List<string>();
 }
-<h1>Успешно добавлены новые записи</h1>
+@if (successfullyProcessedFiles.Count > 0)
+{
+    <p>Количество успешно загруженных файлов @successfullyProcessedFiles.Count:</p>
+    <ul>
+        @foreach (var fileName in successfullyProcessedFiles)
+        {
+            <li>@fileName</li>
+        }
+    </ul>
+}
+else
+{
+    <p>Ни один файл не был успешно загружен.</p>
+}
+
+
+@if (failedProcessedFiles.Count > 0)
+{
+    <p>Не удалось загрузить следующие файлы:</p>
+    <ul>
+        @foreach (var fileName in failedProcessedFiles)
+        {
+            <li>@fileName</li>
+        }
+    </ul>
+}
+
+@if (logs.Count > 0)
+{
+    <p>Не удалось загрузить следующие строки:</p>
+    <ul>
+        @foreach (var fileName in logs)
+        {
+            <li>@fileName</li>
+        }
+    </ul>
+}
+
+
+
