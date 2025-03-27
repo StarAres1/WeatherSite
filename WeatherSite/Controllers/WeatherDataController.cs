@@ -22,25 +22,46 @@ namespace WeatherSite.Controllers
         {
             _context = context;
         }
-        public IActionResult Getting(int year, int month)
+        public IActionResult Getting(int year = 0, int month = 0, int page = 1)
         {
-            Console.WriteLine(year);
-            Console.WriteLine(month);
-            if (year == 0 && month == 0)
+            // Количество записей на странице
+            int pageSize = 50;
+
+            // Базовый запрос
+            var query = _context.Reports.AsQueryable();
+
+            // Фильтрация по году
+            if (year != 0)
             {
-                return View();
+                query = query.Where(r => r.Date.Year == year);
             }
-            else
+
+            // Фильтрация по месяцу
+            if (month != 0)
             {
-                var reports = _context.Reports
-                .Where(r => r.Date.Year == year && r.Date.Month == month)
+                query = query.Where(r => r.Date.Month == month);
+            }
+
+            // Вычисляем общее количество записей
+            int totalRecords = query.Count();
+
+            // Выборка данных с учетом пагинации
+            var reports = query
+                .OrderBy(r => r.Date) // Сортировка по дате
+                .Skip((page - 1) * pageSize) // Пропустить записи предыдущих страниц
+                .Take(pageSize) // Взять записи текущей страницы
                 .ToList();
 
-                ViewBag.SelectedYear = year;
-                ViewBag.SelectedMonth = month;
+            // Передаем выбранные значения в ViewBag
+            ViewBag.SelectedYear = year;
+            ViewBag.SelectedMonth = month;
 
-                return View(reports);
-            }
+            // Передаем данные для пагинации
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+
+            return View(reports);
         }
 
         public IActionResult Adding()

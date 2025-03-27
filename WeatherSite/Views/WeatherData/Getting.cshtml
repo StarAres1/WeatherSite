@@ -1,7 +1,4 @@
 ﻿@model IEnumerable<WeatherSite.Models.Report>
-@{
-
-}
 
 <form asp-controller="WeatherData" asp-action="Getting">
     <div class="form-group">
@@ -40,7 +37,7 @@
             <tr>
                 <th>Дата</th>
                 <th>Время</th>
-                <th>Тепмпература</th>
+                <th>Температура</th>
                 <th>Влажность</th>
                 <th>Td</th>
                 <th>Давление</th>
@@ -50,15 +47,14 @@
                 <th>H</th>
                 <th>VV</th>
                 <th>Погодные явления</th>
-                
             </tr>
         </thead>
         <tbody>
             @foreach (var report in Model)
             {
                 <tr>
-                    <td>@report.Date</td>
-                    <td>@report.Time</td>
+                    <td>@report.Date.ToString("dd.MM.yyyy")</td>
+                    <td>@report.Time.ToString(@"hh\:mm")</td>
                     <td>@report.Temperature</td>
                     <td>@report.Humidity</td>
                     <td>@report.Td</td>
@@ -73,6 +69,73 @@
             }
         </tbody>
     </table>
+
+    <!-- Пагинация -->
+    <div class="pagination">
+        @if (ViewBag.TotalPages > 1)
+        {
+            int currentPage = ViewBag.Page;
+            int totalPages = ViewBag.TotalPages;
+            int maxButtons = 20; // Максимальное количество кнопок
+
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    @if (totalPages <= maxButtons)
+                    {
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link" href="?year=@ViewBag.SelectedYear&month=@ViewBag.SelectedMonth&page=@i">@i</a>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        int startPage = Math.Max(1, currentPage - (maxButtons / 2));
+                        int endPage = Math.Min(totalPages, startPage + maxButtons - 1);
+
+                        // Корректировка диапазона, если он выходит за границы
+                        if (endPage - startPage + 1 < maxButtons)
+                        {
+                            startPage = Math.Max(1, endPage - maxButtons + 1);
+                        }
+
+                        // Первые страницы
+                        if (startPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?year=@ViewBag.SelectedYear&month=@ViewBag.SelectedMonth&page=1">1</a>
+                            </li>
+                            if (startPage > 2)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+                        }
+
+                        // Текущая область
+                        for (int i = startPage; i <= endPage; i++)
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link" href="?year=@ViewBag.SelectedYear&month=@ViewBag.SelectedMonth&page=@i">@i</a>
+                            </li>
+                        }
+
+                        // Последние страницы
+                        if (endPage < totalPages)
+                        {
+                            if (endPage < totalPages - 1)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+                            <li class="page-item">
+                                <a class="page-link" href="?year=@ViewBag.SelectedYear&month=@ViewBag.SelectedMonth&page=@totalPages">@totalPages</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
 }
 else
 {
